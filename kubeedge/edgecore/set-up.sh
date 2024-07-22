@@ -19,43 +19,16 @@ install_packages() {
     sudo curl -L https://raw.githubusercontent.com/containerd/containerd/main/containerd.service -o /etc/systemd/system/containerd.service
     systemctl enable containerd 
 
+    log_message "Install runc ..."
+    wget https://github.com/opencontainers/runc/releases/download/v1.1.13/runc.amd64
+    sudo install -m 755 runc.amd64 /usr/local/sbin/runc
 
     log_message "Install CNI ..."
 
     wget https://github.com/containernetworking/plugins/releases/download/v1.5.1/cni-plugins-linux-amd64-v1.5.1.tgz 
     mkdir -p /opt/cni/bin
     tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.5.1.tgz
-    mkdir -p /etc/cni/net.d/ 
-    cat >/etc/cni/net.d/10-containerd-net.conflist <<EOF
-    {
-      "cniVersion": "1.0.0",
-      "name": "containerd-net",
-      "plugins": [
-        {
-          "type": "bridge",
-          "bridge": "cni0",
-          "isGateway": true,
-          "ipMasq": true,
-          "promiscMode": true,
-          "ipam": {
-            "type": "host-local",
-            "ranges": [
-              [{
-                "subnet": "10.244.0.0/16"
-              }]
-            ],
-            "routes": [
-              { "dst": "0.0.0.0/0" }
-            ]
-          }
-        },
-        {
-          "type": "portmap",
-          "capabilities": {"portMappings": true}
-        }
-      ]
-    }
-    EOF
+
 
 
     log_message "Install nvidia-container-toolkit ..."
@@ -79,16 +52,6 @@ install_packages() {
     cp keadm-v1.17.1-linux-amd64/keadm/keadm /usr/local/bin/keadm
     chmod +x /usr/local/bin/keadm
 
-    mkdir -p /etc/kubeedge/config
-
-    cat <<EOF | sudo tee /etc/kubeedge/config/edgecore.yaml
-modules:
-  edged:
-    tailoredKubeletConfig:
-      cgroupDriver: systemd
-    rootDirectory: /var/lib/kubelet
-EOF
-
 }
 
 # Function to perform system checks
@@ -97,7 +60,50 @@ perform_system_checks() {
     ctr --version
     cat /etc/containerd/config.toml
     systemctl status containerd
-    keadm --version
+}
+
+configure() {
+log_message "Configuring CNI"
+mkdir -p /etc/cni/net.d/ 
+cat >/etc/cni/net.d/10-containerd-net.conflist <<EOF
+{
+  "cniVersion": "1.0.0",
+  "name": "containerd-net",
+  "plugins": [
+    {
+      "type": "bridge",
+      "bridge": "cni0",
+      "isGateway": true,
+      "ipMasq": true,
+      "promiscMode": true,
+      "ipam": {
+        "type": "host-local",
+        "ranges": [
+          [{
+            "subnet": "10.244.0.0/16"
+          }]
+        ],
+        "routes": [
+          { "dst": "0.0.0.0/0" }
+        ]
+      }
+    },
+    {
+      "type": "portmap",
+      "capabilities": {"portMappings": true}
+    }
+  ]
+}
+EOF
+
+log_message "Configuring edgecore"
+mkdir -p /etc/kubeedge/config
+cat <<EOF | sudo tee /etc/kubeedge/config/edgecore.yaml
+modules:
+  edged:
+    rootDirectory: /var/lib/kubelet
+EOF
+
 }
 
 # Main function
@@ -106,7 +112,14 @@ main() {
 
     install_packages
 
+    configure
+
+    perform_system_checks
+
+
+
+    echo "export CLOUD_CORE_ENDPOINT=124.243.152.69:10000 && TOKEN=580b9281b443cd2a85a6857f6f1b4b1206d6a51fa22890a2cdb642078ae51f80.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjE2NjAxNTR9.QJUeoLLHmzNdHSjiYt-W6QyDZ_fni3V5oexTeRzKdO4 && keadm deprecated join --cloudcore-ipport=${CLOUD_CORE_ENDPOINT} --kubeedge-version=1.17.1 --token=${TOKEN}"
+
 }
-
-
-
+main
+# CLOUD_CORE_ENDPOINT="your_cloud_core_endpoint" TOKEN="your_token"
