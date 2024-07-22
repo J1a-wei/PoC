@@ -14,4 +14,5 @@ fi
 systemctl stop edgecore
 rm -rf /etc/kubeedge
 rm -rf /etc/systemd/system/edgecore.service 
+rm -rf /var/lib/kubelet /var/lib/kubeedge
 systemctl daemon-reload 

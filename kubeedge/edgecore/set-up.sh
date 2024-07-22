@@ -118,7 +118,7 @@ main() {
 
 
 
-    echo "export CLOUD_CORE_ENDPOINT=124.243.152.69:10000 && TOKEN=580b9281b443cd2a85a6857f6f1b4b1206d6a51fa22890a2cdb642078ae51f80.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjE2NjAxNTR9.QJUeoLLHmzNdHSjiYt-W6QyDZ_fni3V5oexTeRzKdO4 && keadm deprecated join --cloudcore-ipport=${CLOUD_CORE_ENDPOINT} --kubeedge-version=1.17.1 --token=${TOKEN}"
+    echo 'export CLOUD_CORE_ENDPOINT=124.243.152.69:10000 && TOKEN=580b9281b443cd2a85a6857f6f1b4b1206d6a51fa22890a2cdb642078ae51f80.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjE2NjAxNTR9.QJUeoLLHmzNdHSjiYt-W6QyDZ_fni3V5oexTeRzKdO4 && keadm deprecated join --cloudcore-ipport=$CLOUD_CORE_ENDPOINT --kubeedge-version=1.17.1 --token=$TOKEN'
 
 }
 main
